@@ -1,0 +1,18 @@
+nohup stata-mp -b do "dofile.do"
+
+nohup stata-mp -b do $'"/home/mlee/Documents/Herring_PDT_work/Amendment8/MSE_ABC/economic_sim_HiM_5.do"'
+nohup stata-mp -b do $'"/home/mlee/Documents/Herring_PDT_work/Amendment8/MSE_ABC/economic_sim_LoM_5.do"'
+nohup stata-mp -b do $'"/home/mlee/Documents/Herring_PDT_work/Amendment8/MSE_ABC/economic_sim_LoM_ass_bias_5.do"'
+
+nohup stata-mp -b do $'"/home/mlee/Documents/Herring_PDT_work/Amendment8/MSE_ABC/economic_sim_HiM_ass_bias_5.do"'
+
+This is needed to pass a "literal string" over to stata. 
+
+Since I didn't specify a log file, this is getting stored in
+
+/home/mlee/Documents/Herring_PDT_work/Amendment.log
+
+which isn't the best place to store things.
+
+
+nohup stata-mp -b do $'"/home/mlee/Documents/Workspace/recreational_simulations/cod_and_haddock_GARFO_fy2017/post_sim_utilities/results_2017_sims.do"'

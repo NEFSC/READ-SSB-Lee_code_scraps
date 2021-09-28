@@ -1,0 +1,468 @@
+{smcl}
+{txt}{sf}{ul off}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}/home/mlee/Desktop/scallop temp/margins_checking.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res} 8 Aug 2017, 13:47:57
+{txt}
+{com}. version
+{txt}version 14.2
+
+{com}. about
+
+{txt}Stata/MP 14.2 for Unix (Linux 64-bit x86-64)
+Revision 13 Jul 2017
+Copyright 1985-2015 StataCorp LLC
+
+Total usable memory: {res}  35.30 GB
+
+Single-user 4-core Stata perpetual license:
+       Serial number:  501406202830
+         Licensed to:  Min-Yang Lee
+                       National Marine Fisheries Service
+{txt}
+{com}. 
+. clear
+{txt}
+{com}. scalar drop _all
+{txt}
+{com}. macro drop _all
+{txt}
+{com}. set obs 1000
+{txt}{p}
+number of observations (_N)  was 0,
+now 1,000
+{p_end}
+
+{com}. set seed 12345
+{txt}
+{com}. pause off
+{txt}
+{com}. 
+. gen x=runiform(1,8)
+{txt}
+{com}. generate e = rnormal(0,5)
+{txt}
+{com}. /* y=2*x^2 + 3*x + e */
+. 
+. gen y=2*x^2 + 3*x + e
+{txt}
+{com}. 
+. regress y c.x##c.x 
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}     1,000
+{txt}{hline 13}{c +}{hline 34}   F(2, 997)       = {res} 34477.59
+{txt}       Model {c |} {res} 1865156.43         2  932578.214   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 26967.6764       997  27.0488229   {txt}R-squared       ={res}    0.9857
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.9857
+{txt}       Total {c |} {res}  1892124.1       999  1894.01812   {txt}Root MSE        =   {res} 5.2008
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}           y{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} 3.479616{col 26}{space 2} .4119547{col 37}{space 1}    8.45{col 46}{space 3}0.000{col 54}{space 4} 2.671218{col 67}{space 3} 4.288014
+{txt}{space 12} {c |}
+{space 5}c.x#c.x {c |}{col 14}{res}{space 2} 1.954621{col 26}{space 2} .0449822{col 37}{space 1}   43.45{col 46}{space 3}0.000{col 54}{space 4}  1.86635{col 67}{space 3} 2.042891
+{txt}{space 12} {c |}
+{space 7}_cons {c |}{col 14}{res}{space 2} -.977484{col 26}{space 2} .8238245{col 37}{space 1}   -1.19{col 46}{space 3}0.236{col 54}{space 4}-2.594113{col 67}{space 3}  .639145
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. 
+. /* Mathematically from the DGP
+> dydx = 4x + 3
+> eydx =(4x+3)/y
+> dyex = (4x+3)*x
+> eyex= (4x+3)*(x/y)
+> 
+> */
+. 
+. /* pull out the ybar,  xbar , and xb_bar*/
+. summ
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 11}x {c |}{res}      1,000    4.447716    2.026392   1.006771   7.984758
+{txt}{space 11}e {c |}{res}      1,000    .0718583    5.200348  -16.94551   18.26882
+{txt}{space 11}y {c |}{res}      1,000    61.18368    43.52032   -3.39044   157.2687
+{txt}
+{com}. 
+. qui summ y
+{txt}
+{com}. local ybar=r(mean)
+{txt}
+{com}. qui summ x
+{txt}
+{com}. local xbar=r(mean)
+{txt}
+{com}. 
+. predict xb, xb
+{txt}
+{com}. qui  summ xb
+{txt}
+{com}. local xbbar=r(mean)
+{txt}
+{com}. 
+. /* This works */
+. /* dydx by hand */
+. 
+. /* a. atmeans */
+. 
+. scalar dydx=(_b[x]+ 2*_b[c.x#c.x]*`xbar')
+{txt}
+{com}. scalar list dydx
+{txt}      dydx = {res} 20.866812
+{txt}
+{com}. margins, dydx(x) atmeans
+{res}
+{txt}Conditional marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:dy/dx w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:at}:{space 1}{res:{txt:x}{space 15}{txt:=} {space 3}4.447716 {txt:(mean)}}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      dy/dx{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} 20.86681{col 26}{space 2} .0812882{col 37}{space 1}  256.70{col 46}{space 3}0.000{col 54}{space 4}  20.7073{col 67}{space 3} 21.02633
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. pause
+{txt}
+{com}. 
+. 
+. 
+. 
+. /* b. over the sample*/
+. 
+. gen dydx=(_b[x]+ 2*_b[c.x#c.x]*x)
+{txt}
+{com}. egen tdydx=total(dydx)
+{txt}
+{com}. replace tdydx=tdydx/e(N)
+{txt}(1,000 real changes made)
+
+{com}. list tdydx in 1
+{txt}
+     {c TLC}{hline 11}{c TRC}
+     {c |} {res}    tdydx {txt}{c |}
+     {c LT}{hline 11}{c RT}
+  1. {c |} {res}20.866812 {txt}{c |}
+     {c BLC}{hline 11}{c BRC}
+
+{com}. 
+. margins, dydx(x)
+{res}
+{txt}Average marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:dy/dx w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      dy/dx{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} 20.86681{col 26}{space 2} .0812882{col 37}{space 1}  256.70{col 46}{space 3}0.000{col 54}{space 4}  20.7073{col 67}{space 3} 21.02633
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. pause
+{txt}
+{com}. 
+. 
+. 
+. 
+. 
+. 
+. 
+. /* dyex by hand */
+. 
+. /* a. atmeans */
+. 
+. scalar dyex=(_b[x]+ 2*_b[c.x#c.x]*`xbar') *`xbar'
+{txt}
+{com}. scalar list dyex
+{txt}      dyex = {res} 92.809649
+{txt}
+{com}. margins, dyex(x) atmeans
+{res}
+{txt}Conditional marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:dy/ex w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:at}:{space 1}{res:{txt:x}{space 15}{txt:=} {space 3}4.447716 {txt:(mean)}}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      dy/ex{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} 92.80965{col 26}{space 2} .3615466{col 37}{space 1}  256.70{col 46}{space 3}0.000{col 54}{space 4} 92.10017{col 67}{space 3} 93.51913
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. pause
+{txt}
+{com}. 
+. /* b. over the sample*/
+. 
+. gen dyex=(_b[x]+ 2*_b[c.x#c.x]*x)*x
+{txt}
+{com}. egen tdyex=total(dyex)
+{txt}
+{com}. replace tdyex=tdyex/e(N)
+{txt}(1,000 real changes made)
+
+{com}. list tdyex in 1
+{txt}
+     {c TLC}{hline 11}{c TRC}
+     {c |} {res}    tdyex {txt}{c |}
+     {c LT}{hline 11}{c RT}
+  1. {c |} {res}108.84598 {txt}{c |}
+     {c BLC}{hline 11}{c BRC}
+
+{com}. 
+. margins, dyex(x)
+{res}
+{txt}Average marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:dy/ex w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      dy/ex{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2}  108.846{col 26}{space 2} .5046241{col 37}{space 1}  215.70{col 46}{space 3}0.000{col 54}{space 4} 107.8557{col 67}{space 3} 109.8362
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. 
+. pause
+{txt}
+{com}. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. /* This does not work */
+. /* eydx by hand */
+. 
+. /* a. atmeans */
+. 
+. scalar eydx_wrong=(_b[x]+ 2*_b[c.x#c.x]*`xbar' )/`ybar'
+{txt}
+{com}. scalar eydx=(_b[x]+ 2*_b[c.x#c.x]*`xbar' )/(_b[x]*`xbar'+ _b[c.x#c.x]*`xbar'*`xbar'+_b[_cons])
+{txt}
+{com}. 
+. 
+. scalar list eydx eydx_wrong
+{txt}      eydx = {res} .39248774
+{txt}eydx_wrong = {res} .34105194
+{txt}
+{com}. margins, eydx(x) atmeans
+{res}
+{txt}Conditional marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:ey/dx w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:at}:{space 1}{res:{txt:x}{space 15}{txt:=} {space 3}4.447716 {txt:(mean)}}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      ey/dx{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} .3924877{col 26}{space 2} .0023401{col 37}{space 1}  167.72{col 46}{space 3}0.000{col 54}{space 4} .3878957{col 67}{space 3} .3970798
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. /* b. over the sample*/
+. pause
+{txt}
+{com}. gen eydx_wrong=(_b[x]+ 2*_b[c.x#c.x]*x)/y
+{txt}
+{com}. 
+. gen eydx=(_b[x]+ 2*_b[c.x#c.x]*x)/(_b[x]*x+ _b[c.x#c.x]*x*x+_b[_cons])
+{txt}
+{com}. 
+. egen teydx=total(eydx)
+{txt}
+{com}. egen teydx_wrong=total(eydx_wrong)
+{txt}
+{com}. replace teydx_wrong=teydx_wrong/e(N)
+{txt}(1,000 real changes made)
+
+{com}. 
+. replace teydx=teydx/e(N)
+{txt}(1,000 real changes made)
+
+{com}. list teydx in 1
+{txt}
+     {c TLC}{hline 11}{c TRC}
+     {c |} {res}    teydx {txt}{c |}
+     {c LT}{hline 11}{c RT}
+  1. {c |} {res}.51071301 {txt}{c |}
+     {c BLC}{hline 11}{c BRC}
+
+{com}. 
+. margins, eydx(x)
+{res}
+{txt}Average marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:ey/dx w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      ey/dx{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2}  .510713{col 26}{space 2}  .015904{col 37}{space 1}   32.11{col 46}{space 3}0.000{col 54}{space 4} .4795038{col 67}{space 3} .5419222
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. 
+. pause
+{txt}
+{com}. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. /* This does not work */
+. /* eyex by hand */
+. 
+. /* a. atmeans */
+. 
+. scalar eyex_wrong=(_b[x]+ 2*_b[c.x#c.x]*`xbar' )/(`ybar'/`xbar')
+{txt}
+{com}.  scalar eyex=(_b[x]+ 2*_b[c.x#c.x]*`xbar' )/(((_b[x]*`xbar'+ _b[c.x#c.x]*`xbar'*`xbar'+_b[_cons]))/`xbar')
+{txt}
+{com}. scalar list eyex
+{txt}      eyex = {res} 1.7456739
+{txt}
+{com}. margins, eyex(x) atmeans
+{res}
+{txt}Conditional marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:ey/ex w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:at}:{space 1}{res:{txt:x}{space 15}{txt:=} {space 3}4.447716 {txt:(mean)}}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      ey/ex{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} 1.745674{col 26}{space 2} .0104081{col 37}{space 1}  167.72{col 46}{space 3}0.000{col 54}{space 4}  1.72525{col 67}{space 3} 1.766098
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. /* b. over the sample*/
+. pause
+{txt}
+{com}. gen eyex=(_b[x]+ 2*_b[c.x#c.x]*x)/(((_b[x]*x+ _b[c.x#c.x]*x*x+_b[_cons]))/x)
+{txt}
+{com}. egen teyex=total(eyex)
+{txt}
+{com}. replace teyex=teyex/e(N)
+{txt}(1,000 real changes made)
+
+{com}. list teyex in 1
+{txt}
+     {c TLC}{hline 11}{c TRC}
+     {c |} {res}    teyex {txt}{c |}
+     {c LT}{hline 11}{c RT}
+  1. {c |} {res}1.7335035 {txt}{c |}
+     {c BLC}{hline 11}{c BRC}
+
+{com}. 
+. margins, eyex(x)
+{res}
+{txt}Average marginal effects{col 49}Number of obs{col 67}= {res}     1,000
+{txt}Model VCE{col 14}: {res}OLS
+
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:Expression}:{space 1}{res:Linear prediction, predict()}{p_end}
+{p2colreset}{...}
+{txt}{p2colset 1 14 16 2}{...}
+{p2col:ey/ex w.r.t.}:{space 1}{res:x}{p_end}
+{p2colreset}{...}
+
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26} Delta-method
+{col 14}{c |}      ey/ex{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 11}x {c |}{col 14}{res}{space 2} 1.733504{col 26}{space 2} .0236298{col 37}{space 1}   73.36{col 46}{space 3}0.000{col 54}{space 4} 1.687134{col 67}{space 3} 1.779873
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. 
+. 
+. 
+. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}/home/mlee/Desktop/scallop temp/margins_checking.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res} 8 Aug 2017, 13:47:58
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}

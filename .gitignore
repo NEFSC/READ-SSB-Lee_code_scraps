@@ -14,4 +14,15 @@ library.bib
 *.docx
 *.aux
 *.out
-*.dta
+veslog_species_research.dta
+img_source.dta
+img_source_no_blobs.dta
+research_me2.dta
+testing_odbc.do
+tiny_odbc.do
+matlab/
+exclude/
+dui_southern_shp.dta
+tl_2016_us_county.shp
+tl_2016_us_county_shp.dta
+
