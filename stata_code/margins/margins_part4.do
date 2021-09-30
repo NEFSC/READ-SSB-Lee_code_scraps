@@ -60,6 +60,7 @@ replace tdydx=tdydx/e(N)
 list tdydx in 1
 
 margins, dydx(x)
+summ dydx
 pause
 
 
