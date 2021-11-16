@@ -15,7 +15,7 @@ Tobit. Tobit is nested in churdle linear, so this is easy to dispense with.
 
 
 
-Exponetial
+Exponential
 	E[y|x, y>0 ]and E[y|x] formulae are given in Wooldridge, p 537
 
 	
@@ -24,8 +24,11 @@ wooldridge uses \lambda() for the inverse mills ratio.
 	lambda = \phi()\ \Phi() where \phi is the standard normal density function and \Phi is the cumulative normal density function
 	
 	
-	
 	gen IMR2=normalden(xb)/normal(xb)
+	
+	
+	
+	https://www.statalist.org/forums/forum/general-stata-discussion/general/1325438-exponentiating-coefficients-in-margins-and-a-couple-other-things
 	
 	
 */
@@ -73,7 +76,7 @@ outcome of the response variable. Here, w=0 precludes y >0.
 /*
 Wooldridge to stata correspondence
 
-1.  Wooldridge's E[y|x]  <---> stata's ystar
+1.  Wooldridge's E[y|x]  <---> stata's ystar <--> nehurdle, predict(ycen)
 
 
 Wooldridge's powerpoint slides
@@ -82,7 +85,7 @@ Wooldridge's powerpoint slides
 
 stata's ystar is more general, because it allows for an upper limit and a lower limit.  
 
-2.  Wooldridge's E[Y|x,y>0] <---> stata's e(0,.)
+2.  Wooldridge's E[Y|x,y>0] <---> stata's e(0,.)  <--> nehurdle, predict(ytrun)
 
 E[Y|x,y>0] = xB = \sigma \lambda(Xb / \sigma)
 stata's e(a,b) is more general because it allows for an upper and lower limit.
@@ -114,16 +117,6 @@ And that's precisely what stata does.  However, the expectations of course depen
 /*********************************************************************/
 /*********************************************************************/
 
-
-/*
-Predict options:  
-churdle, predict(e(0,.))  <--> nehurdle, predict(ytrun)
-
-
-churdle, predict(ystar)  <--> nehurdle, predict(ycen)
-
-
- */
 
 
 
@@ -282,7 +275,7 @@ summ ystar_ch ystar_tr ycen_ne
 /*****************************elasticities ***************************/
 /*********************************************************************/
 /*********************************************************************/
-pause
+
 est restore ch
 margins, dydx(distance age) predict(ystar)
 est restore nehurdle
@@ -315,8 +308,6 @@ margins, eyex(distance age) predict(ytrun)
 
 
 
-
-pause
 
 
 /*elasticities*/
@@ -367,7 +358,7 @@ est store poireg
 est table chexp lnyreg poireg prob, equations(1:1:1:., 2:.:.:1) b se
 
 /* exponential */
-nehurdle hours age i.smoke distance, trunc exponential select(age i.smoke)
+nehurdle hours age i.smoke distance, trunc exponential select(age i.smoke distance) 
 est store nehurdle_exp
 
 
@@ -425,6 +416,36 @@ predict ystar_C
 
 
 
+
+
+
+/*********************************************************************/
+/*"linear" predictions from nehurdle, exponential*/
+/*********************************************************************/
+est restore nehurdle_exp
+predict xb_neexp, xbval
+
+/*********************************************************************/
+/* the E[y|x AND y>0] */
+/*********************************************************************/
+predict e0dot_neexp, ytrun
+
+/*********************************************************************/
+/* the E[y|x] */
+/*********************************************************************/
+predict ystar_ne, ycen
+
+
+
+
+/* these match */
+summ e0dot_neexp e0dot_chexp
+summ ystar_ne ystar_C
+
+/*this does not */
+summ xb_chexp xb_neexp yhat_ols
+pause
+
 /*********************************************************************/
 /* check that they are the same */
 /*********************************************************************/
@@ -476,6 +497,11 @@ gen elast_dist= semi_dist*distance
 /* semi-elasticity, canned */
 margins, eydx(distance)
 summ semi_dist
+pause
+
+margins, expression(_b[hours:distance] + normalden(xb(#2))/normal(xb(#2))*_b[selection_ll:distance])
+margins, expression(_b[hours:distance] + normalden(xb(selection_ll))/normal(xb(selection_ll))*_b[selection_ll:distance])
+
 
 /***************************
 MATCH 
@@ -507,6 +533,12 @@ gen elast_distE0=_b[hours:distance]*distance
 /* elasticity canned */
 margins, eyex(distance) predict(e(0,.))
 summ elast_distE0
+
+margins, expression(_b[hours:distance]*distance)
+
+
+
+
 
 /***************************
 MATCH 
@@ -574,6 +606,11 @@ gen elast_dist_ll= _b[hours:lndist] + IMR_ll*_b[selection_ll:lndist]
 
 margins, eydx(lndist) predict(ystar)
 summ elast_dist_ll
+
+
+margins, expression(_b[hours:lndist] + normalden(xb(selection_ll))/normal(xb(selection_ll))*_b[selection_ll:lndist])
+
+
 /************
 MATCH  
 To compute the elasticity, we use eydx.  nehurdle and churdle are aware of the "ln" on the LHS. 
@@ -584,6 +621,7 @@ margins, eydx(lndist) predict(ycen)
 
 
 
+margins, expression(_b[lnhours:lndist] + normalden(xb(selection))/normal(xb(selection))*_b[selection:lndist])
 
 
 
