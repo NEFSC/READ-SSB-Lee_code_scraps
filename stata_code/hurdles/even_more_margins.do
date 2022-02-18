@@ -1,0 +1,161 @@
+
+	/*
+wooldridge uses \lambda() for the inverse mills ratio.
+	lambda = \phi()\ \Phi() where \phi is the standard normal density function and \Phi is the cumulative normal density function
+	
+
+	
+	
+	gen IMR2=normalden(xb)/normal(xb)
+	
+	\Phi --> normal
+	\phi --> normalden
+	
+	*/
+
+
+        . webuse womenwk
+        . replace wage = 0 if missing(wage)
+        . global xvars i.married children educ age
+
+        . nehurdle wage $xvars, nolog trunc
+
+		
+/* doing the margins after nehurdle, by hand */		
+		
+		/* extract lnsigma and exponentiate */
+		local sig exp(_b[lnsigma:_cons])
+
+		/* define xbs and the Inverse mills ratio */
+		local xbs xb(wage)/`sig'
+		local IMR normalden(`xbs')/normal(`xbs')
+		
+		/* PSEL */
+		/* predicted probabilities */
+		margins, predict(psel)
+		margins,  expression(normal(xb(selection)))
+		
+		/*marginal effects */
+		margins, dydx(_all) predict(psel)
+		
+		margins,  expression(normalden(xb(selection))*_b[selection:age])
+		margins,  expression(normalden(xb(selection))*_b[selection:children])
+		margins,  expression(normalden(xb(selection))*_b[selection:education])
+		
+		/* ytrun */
+		/* E[y|x, y>0] */
+		margins, predict(ytrun)
+		margins, expression(xb(wage)+`sig'*normalden(`xbs')/normal(`xbs'))
+		margins, dydx(_all) predict(ytrun)
+
+		
+		/* dydx ytrun for education */
+ 		margins, expression (_b[wage:education]*(1-(`IMR')*(`xbs' + `IMR')))
+ 		margins, expression (_b[wage:children]*(1-(`IMR')*(`xbs' + `IMR')))
+ 		margins, expression (_b[wage:age]*(1-(`IMR')*(`xbs' + `IMR')))
+
+		
+
+		
+		/*ycen */
+		/* E[y|x] */
+
+		margins, predict(ycen)
+		margins,  expression(normal(xb(selection))*xb(wage) + `sig'*normalden(`xbs')   )
+
+		margins, dydx(_all) predict(ycen)
+
+		local PS normal(xb(selection))
+		local partial_ytrun _b[wage:age]*(1-(`IMR')*(`xbs' + `IMR'))
+		local ytrun xb(wage)+`sig'*normalden(xb(wage)/`sig')/normal(xb(wage)/`sig')
+		local partial_PS normalden(xb(selection))*_b[selection:age]
+		
+
+		margins,  expression( (`partial_PS')*(`ytrun') + (`PS')*(`partial_ytrun') )
+		
+
+		local partial_ytrun _b[wage:children]*(1-(`IMR')*(`xbs' + `IMR'))
+		local partial_PS normalden(xb(selection))*_b[selection:children]
+		
+		
+		margins,  expression( (`partial_PS')*(`ytrun') + (`PS')*(`partial_ytrun') )
+
+		
+		local partial_ytrun _b[wage:education]*(1-(`IMR')*(`xbs' + `IMR'))
+		local partial_PS normalden(xb(selection))*_b[selection:education]
+		
+		margins,  expression( (`partial_PS')*(`ytrun') + (`PS')*(`partial_ytrun') )
+		margins, dydx(_all) predict(ycen)
+
+		
+		
+		
+nehurdle wage $xvars, exponential
+				
+margins, predict(ycen)
+		
+local sig exp(_b[lnsigma:_cons])
+
+	
+		/* extract lnsigma and exponentiate */
+		local sig exp(_b[lnsigma:_cons])
+
+	
+		/* PSEL */
+		/* predicted probabilities */
+		margins, predict(psel)
+		margins,  expression(normal(xb(selection)))
+
+		/*marginal effects */
+		margins, dydx(_all) predict(psel)
+		
+		margins,  expression(normalden(xb(selection))*_b[selection:age])
+		margins,  expression(normalden(xb(selection))*_b[selection:children])
+		margins,  expression(normalden(xb(selection))*_b[selection:education])
+		
+
+			
+		/* ytrun */
+		/* E[y|x, y>0] */
+		margins, predict(ytrun)
+		local ytrun exp(xb(lnwage) +`sig'^2/2)
+		margins, expression (`ytrun')
+		margins, dydx(_all) predict(ytrun)
+		
+		margins, expression ((`ytrun')*_b[lnwage:children] )
+		margins, expression ((`ytrun')*_b[lnwage:age] )
+		margins, expression ((`ytrun')*_b[lnwage:education] )
+
+
+/* ycen */
+
+	margins, predict(ycen)
+
+	local PS normal(xb(selection))
+	local ycen `PS'*`ytrun'
+	
+	margins,  expression(`ycen')
+
+
+	margins, dydx(_all) predict(ycen)
+	local partial_PS normalden(xb(selection))*_b[selection:age]
+	local partial_ytrun `ytrun'*_b[lnwage:age]
+	
+	margins,  expression(`partial_PS'*`ytrun' + `partial_ytrun'*`PS'  )
+
+	local partial_PS normalden(xb(selection))*_b[selection:education]
+	local partial_ytrun `ytrun'*_b[lnwage:education]
+
+	margins,  expression(`partial_PS'*`ytrun' + `partial_ytrun'*`PS'  )
+
+	
+	local partial_PS normalden(xb(selection))*_b[selection:children]
+	local partial_ytrun `ytrun'*_b[lnwage:children]
+
+	margins,  expression(`partial_PS'*`ytrun' + `partial_ytrun'*`PS'  )
+
+	margins, dydx(_all) predict(ycen)
+
+	
+	
+	/* for discrete vars we plug in the finite approx for the deriviatives [Y|x=1 - Y|x=0] */
