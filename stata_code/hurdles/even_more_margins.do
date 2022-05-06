@@ -16,7 +16,7 @@ wooldridge uses \lambda() for the inverse mills ratio.
 
         . webuse womenwk
         . replace wage = 0 if missing(wage)
-        . global xvars i.married children educ age
+        . global xvars ib0.married children educ age
 
         . nehurdle wage $xvars, nolog trunc
 
@@ -27,7 +27,8 @@ wooldridge uses \lambda() for the inverse mills ratio.
 		local sig exp(_b[lnsigma:_cons])
 
 		/* define xbs and the Inverse mills ratio */
-		local xbs xb(wage)/`sig'
+		local xbw xb(wage)
+		local xbs `xbw'/`sig'
 		local IMR normalden(`xbs')/normal(`xbs')
 		
 		/* PSEL */
@@ -42,10 +43,22 @@ wooldridge uses \lambda() for the inverse mills ratio.
 		margins,  expression(normalden(xb(selection))*_b[selection:children])
 		margins,  expression(normalden(xb(selection))*_b[selection:education])
 		
+		preserve
+		replace married=0
+		margins,  expression(normal(_b[selection:1.married] + _b[selection:children]*children+ _b[selection:education]*education+_b[selection:age]*age +_b[selection:_cons]) - normal(xb(selection)) )  
+		restore
+
+		margins, dydx(_all) predict(psel)
+
 		/* ytrun */
 		/* E[y|x, y>0] */
+
+		/* all four of these should be identical*/
 		margins, predict(ytrun)
-		margins, expression(xb(wage)+`sig'*normalden(`xbs')/normal(`xbs'))
+		margins, expression(`xbw'+`sig'*normalden(`xbw'/`sig')/normal(`xbw'/`sig'))
+		margins, expression(`xbw'+`sig'*normalden(`xbs')/normal(`xbs'))
+		margins, expression(`xbw'+`sig'*`IMR')
+
 		margins, dydx(_all) predict(ytrun)
 
 		
@@ -55,7 +68,18 @@ wooldridge uses \lambda() for the inverse mills ratio.
  		margins, expression (_b[wage:age]*(1-(`IMR')*(`xbs' + `IMR')))
 
 		
+		
+		/*for married, predict ytrun at married =0 and then at married==1 */
+		/* the first line predicts xbw and then subtracts off the married effect. For rows where married=1, this sets married =0. And for rows where married=0, this does nothing.*/
+		local xbat0 `xbw'-_b[wage:1.married]*married
+		local xbat1 `xbat0'+_b[wage:1.married]*1
 
+		local pred_at0 `xbat0'+`sig'*normalden(`xbat0'/`sig')/normal(`xbat0'/`sig')
+		local pred_at1 `xbat1'+`sig'*normalden(`xbat1'/`sig')/normal(`xbat1'/`sig')
+
+		margins, expression(`pred_at1'-`pred_at0')
+
+		
 		
 		/*ycen */
 		/* E[y|x] */
@@ -88,7 +112,8 @@ wooldridge uses \lambda() for the inverse mills ratio.
 		margins, dydx(_all) predict(ycen)
 
 		
-		
+		/*for married, predict ycen at married =0 and then at married==1 */
+
 		
 nehurdle wage $xvars, exponential
 				
