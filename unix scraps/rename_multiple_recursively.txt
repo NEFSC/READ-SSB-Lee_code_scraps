@@ -1,0 +1,6 @@
+# Rename multiple files recursively
+find ./ -depth -name "*.t1" -exec sh -c 'mv "$1" "${1%.t1}.t2"' _ {} \;
+
+
+# https://stackoverflow.com/questions/21985492/recursively-change-file-extensions-in-bash
+
