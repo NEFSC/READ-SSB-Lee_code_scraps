@@ -1,0 +1,5 @@
+# Example: Remove the "CAMS_GARFO." prefix and add “CAMS_” (if not part of the name already) as shown below.
+
+
+grep --include=*.do -rl 'CAMS_GARFO.' ./ | xargs sed -i 's/CAMS_GARFO./CAMS_/g'
+grep --include=*.do -rl 'CAMS_CAMS_' ./ | xargs sed -i 's/CAMS_CAMS_/CAMS_/g'

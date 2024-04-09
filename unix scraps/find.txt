@@ -1,0 +1,19 @@
+# Recursively look in the directory '/path/to/dir' for the string "herring_from_vtr2" n 
+grep -r "herring_from_vtr2" /path/to/dir
+
+
+# Recursively look in the current directory for the text "herring_from_vtr" in files that end in .do
+grep --include=\*.do -r .  -e 'herring_from_vtr'
+
+
+
+# Recursively look in the current directory for the text 'CAMS_GARFO.' in files that end in .do
+
+grep --include=*.do -rl 'CAMS_GARFO.' 
+
+
+
+
+# Recursively look in the current directory for the text 'CAMS_GARFO.' in files that end in .do and print the matching lines
+
+grep --include=*.do -r . -e 'CAMS_GARFO.'
